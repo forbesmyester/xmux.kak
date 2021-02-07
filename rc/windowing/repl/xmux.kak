@@ -53,6 +53,11 @@ define-command xmux-send-text -params 0..1 -docstring %{
         xmux-send-text [text]: Send text to the REPL pane.
         If no text is passed, then the selection is used
     } %{
+    evaluate-commands %sh{
+        if [ -z "$kak_opt_xmux_socket" ]; then
+            echo "xmux-repl"
+        fi
+    }
     nop %sh{
         if [ $# -eq 0 ]; then
             tmux -S "$kak_opt_xmux_socket" set-buffer -b kak_selection -- "${kak_selection}"
