@@ -14,8 +14,10 @@ This Kakoune plugin blends these two ideas and provides a REPL that is launched 
 
 ## Installation
 
-Put `plug "forbesmyester/xmux.kak"` in your ~/.config/kak/kakrc.
+ * Install [plug.kak](https://github.com/robertmeta/plug.kak);
+ * Install [connect.kak](https://github.com/alexherbo2/connect.kak)
+ * Put `plug "forbesmyester/xmux.kak"` in your ~/.config/kak/kakrc.
 
 ## Usage
 
-Provides two commands `xmux-repl` and `xmux-send-text` which spawn a REPL and send text to that REPL respectively.
+Provides two commands `xmux-repl`, `xmux-send-text` and `xmux-send-lines` which spawn a REPL, send text and send lines to that REPL respectively.
