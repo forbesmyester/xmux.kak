@@ -21,3 +21,5 @@ This Kakoune plugin blends these two ideas and provides a REPL that is launched 
 ## Usage
 
 Provides two commands `xmux-repl`, `xmux-send-text` and `xmux-send-lines` which spawn a REPL, send text and send lines to that REPL respectively.
+
+xmux-repl-f ":e $(fzf)"
