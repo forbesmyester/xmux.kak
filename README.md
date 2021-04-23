@@ -17,7 +17,7 @@ This Kakoune plugin blends these two ideas and provides a REPL that is launched 
  * Install [plug.kak](https://github.com/robertmeta/plug.kak);
  * Install [connect.kak](https://github.com/alexherbo2/connect.kak)
  * Put `xmux` from [xmux](https://github.com/forbesmyester/xmux) somewhere in your path and make sure it's executable.
- * Put `plug "forbesmyester/xmux.kak"` in your ~/.config/kak/kakrc.
+ * Put `plug "forbesmyester/xmux.kak"` in your $HOME/.config/kak/kakrc.
  * Run `:plug-install` within Kakoune
 
 ## Usage
@@ -26,3 +26,11 @@ Provides just one commands `xmux-repl` which spawn a REPL. When you use this com
 
  * `xmux-chars-bob` would be created by a `:xmux-repl bob` and it will send any characters passed to it to the REPL.
  * `xmux-lines-bob` like `xmux-chars-bob`, but it will ensure a new line is sent afterwards.
+
+## XMUX configuration
+
+These notes should really be in [xmux](https://github.com/forbesmyester/xmux), but xmux will run "$HOME/.xmux.conf" when creating (tmux -f $HOME/.xmux.conf) if it exists. After that it will ask tmux to source "$HOME/.xmux.post".
+
+In my "$HOME/.xmux.conf" file I have one line `source ~/.tmux.conf`.
+
+In my "$HOME/.xmux.post" file I also have one line, which is `set -g status off`.
