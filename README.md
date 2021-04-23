@@ -16,6 +16,7 @@ This Kakoune plugin blends these two ideas and provides a REPL that is launched 
 
  * Install [plug.kak](https://github.com/robertmeta/plug.kak);
  * Install [connect.kak](https://github.com/alexherbo2/connect.kak)
+ * Put `xmux` from [xmux](https://github.com/forbesmyester/xmux) somewhere in your path and make sure it's executable.
  * Put `plug "forbesmyester/xmux.kak"` in your ~/.config/kak/kakrc.
 
 ## Usage
