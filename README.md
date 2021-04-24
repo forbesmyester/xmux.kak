@@ -24,7 +24,7 @@ This Kakoune plugin blends these two ideas and provides a REPL that is launched 
 
 Provides just one commands `xmux-repl` which spawn a REPL. When you use this command it will attach more commands such as:
 
- * `xmux-chars-bob` would be created by a `:xmux-repl bob` and it will send any characters passed to it to the REPL.
+ * `xmux-chars-bob` would be created by a `:xmux-repl bob` and it will send any characters in the selection or the characters in the first argument.
  * `xmux-lines-bob` like `xmux-chars-bob`, but it will ensure a new line is sent afterwards.
 
 ## XMUX configuration
