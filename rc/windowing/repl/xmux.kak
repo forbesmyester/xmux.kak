@@ -1,70 +1,81 @@
-hook global ModuleLoaded x11 %{
-    require-module xmux-repl
+hook global ModuleLoaded connect %{
+    require-module xmux
 }
 
-provide-module xmux-repl %{
+provide-module xmux %{
 
-declare-option -docstring "window id of the REPL window" str x11_repl_id
-declare-option -docstring "how to connect to x11-tmux" str xmux_socket
-declare-option -docstring "how to connect to x11-tmux" str xmux_session
-declare-option -docstring "how to connect to x11-tmux" str xmux_config
-declare-option -docstring "xmux_default_terminal" str xmux_default_terminal
+declare-option -hidden str xmux_session
+
+define-command -hidden xmux-incrment-session-ext %{
+    evaluate-commands %sh{
+    }
+}
+
+
+define-command -hidden -params 1..2 xmux-repl-ensure-impl %{
+    evaluate-commands %sh{
+        if xmux move_to_current_desktop "$1" "$2"; then
+            exit 0
+        fi
+        echo "connect-terminal xmux new \"$1\" \"$2\""
+    }
+}
+
+define-command -hidden -params 0..1 xmux-repl-ensure %{
+    xmux-repl-ensure-impl %val{session} %arg{@}
+    evaluate-commands %sh{
+        echo "define-command" "-override" "xmux-chars-$1" "-params" "0..1 %{ xmux-chars "$1" %arg{@} }"
+        echo "define-command" "-override" "xmux-lines-$1" "-params" "0..1 %{ xmux-lines "$1" %arg{@} }"
+    }
+    set-option current xmux_session %arg{1}
+}
+
+define-command -hidden -params 1..2 xmux-chars %{
+    xmux-send chars %arg{@}
+}
+
+define-command -hidden -params 1..2 xmux-lines %{
+    xmux-send lines %arg{@}
+}
+
+define-command -hidden -params 2..3 xmux-send %{
+    xmux-repl-ensure %arg{2}
+    nop %sh{
+        if [ "$#" -gt 2 ]; then
+            printf "%s" "$3" | xmux "$1" $kak_session "$2"
+        else
+            printf "%s" "${kak_selection}" | xmux "$1" $kak_session "$2"
+        fi
+    }
+    set-option current xmux_session %arg{1}
+}
 
 define-command -docstring %{
-    xmux-repl [<arguments>]: create a new window for repl interaction
-    All optional parameters are forwarded to the new window
+    xmux-repl:          New REPL using $SHELL
+    xmux-repl NAME:     New REPL named $NAME
+    xmux-repl NAME CMD: New REPL named $NAME using $CMD
+    xmux-repl "" CMD:   New REPL named $NAME
 } \
-    -params .. \
+    -params 0..2 \
     -shell-completion \
     xmux-repl %{
     evaluate-commands %sh{
-        SOCKET="$(mktemp -u -t 'kak-xmux-XXXXXXX')"
-        SESSION="$(basename "$SOCKET")"
-        touch "${SOCKET}-config"
-        echo "set-option current xmux_socket \"$SOCKET\""
-        echo "set-option current xmux_config \"${SOCKET}-config\""
-        echo "set-option current xmux_session \"$SESSION\""
-        if [ -n "$kak_opt_xmux_default_terminal" ]; then
-            printf 'set -g default-terminal "%s"\n' "$kak_opt_xmux_default_terminal" > "${SOCKET}-config"
+        . "$kak_opt_prelude_path"
+        if [ "$#" -eq 0 ]; then
+            echo "xmux-repl-ensure default"
+            exit
         fi
-    }
-    x11-terminal tmux -S %opt{xmux_socket} -f %opt{xmux_config} new-session -s %opt{xmux_session} %arg{@}
-    evaluate-commands %sh{
-        TMUX_SESSION_COUNT=0
-        LOOP_COUNT=0
-        while [ "$LOOP_COUNT" -lt 50 ] && [ "$TMUX_SESSION_COUNT" -lt 1 ]; do
-            if tmux -S "$kak_opt_xmux_socket" list-sessions 2>&1 | grep "^$kak_opt_xmux_session" > /dev/null; then
-                TMUX_SESSION_COUNT=1
-            fi
-            LOOP_COUNT=$((LOOP_COUNT + 1))
-            sleep 0.1
-        done
-        if [ "$TMUX_SESSION_COUNT" -lt 1 ]; then
-            echo "echo Could not re-attach to session"
-            exit 1
+        if [ "$#" -eq 1 ]; then
+            echo "xmux-repl-ensure %arg{1}"
+            exit
         fi
-        tmux -S "$kak_opt_xmux_socket" set-option -g prefix NONE
-        tmux -S "$kak_opt_xmux_socket" set-option -g prefix2 NONE
-        tmux -S "$kak_opt_xmux_socket" set status off
-    }
-}
-
-define-command xmux-send-text -params 0..1 -docstring %{
-        xmux-send-text [text]: Send text to the REPL pane.
-        If no text is passed, then the selection is used
-    } %{
-    evaluate-commands %sh{
-        if [ -z "$kak_opt_xmux_socket" ]; then
-            echo "xmux-repl"
+        if [ "$1" = "" ]; then
+            echo "xmux-repl-ensure 'default'"
+            echo "xmux-lines 'default' %arg{2}"
+            exit
         fi
-    }
-    nop %sh{
-        if [ $# -eq 0 ]; then
-            tmux -S "$kak_opt_xmux_socket" set-buffer -b kak_selection -- "${kak_selection}"
-        else
-            tmux -S "$kak_opt_xmux_socket" set-buffer -b kak_selection -- "$1"
-        fi
-        tmux -S "$kak_opt_xmux_socket" paste-buffer -b kak_selection -t "$kak_opt_xmux_session"
+        echo "xmux-repl-ensure %arg{1}"
+        echo "xmux-lines %arg{1} %arg{2}"
     }
 }
 
