@@ -14,7 +14,7 @@ define-command -hidden xmux-incrment-session-ext %{
 
 define-command -hidden -params 1..2 xmux-repl-ensure-impl %{
     evaluate-commands %sh{
-        if xmux move_to_current_desktop "$1" "$2"; then
+        if xmux exists "$1" "$2"; then
             exit 0
         fi
         echo "connect-terminal xmux new \"$1\" \"$2\""
@@ -70,11 +70,11 @@ define-command -docstring %{
             exit
         fi
         if [ "$1" = "" ]; then
-            echo "xmux-repl-ensure 'default'"
+            # echo "xmux-repl-ensure 'default'"
             echo "xmux-lines 'default' %arg{2}"
             exit
         fi
-        echo "xmux-repl-ensure %arg{1}"
+        # echo "xmux-repl-ensure %arg{1}"
         echo "xmux-lines %arg{1} %arg{2}"
     }
 }
