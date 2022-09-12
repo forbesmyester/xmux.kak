@@ -51,7 +51,7 @@ define-command -params 0 xmux-split %{
     evaluate-commands %sh{
         SOCKET="$(xmux current_socket)"
         if [ "$kak_session" != "$SOCKET" ]; then
-            echo "echo 'Kakoune session must be same name as tmux session $kak_session != $SOCKET'"
+            echo "echo 'Kakoune session must be same name as tmux session (KAK_SESSION: $kak_session) != (TMUX_SOCKET $SOCKET)'"
             exit
         fi
         SESSION="$(xmux current_session "$SOCKET")"
