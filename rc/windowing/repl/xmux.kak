@@ -21,7 +21,7 @@ define-command -hidden -params 1..2 xmux-repl-ensure-impl %{
 }
 
 
-define-command -hidden -params 1 xmux-commands %{
+define-command -params 1 xmux-commands %{
     evaluate-commands %sh{
         echo "define-command" "-override" "xmux-chars-$1" "-params" "0..1 %{ xmux-chars "$1" %arg{@} }"
         echo "define-command" "-override" "xmux-lines-$1" "-params" "0..1 %{ xmux-lines "$1" %arg{@} }"
