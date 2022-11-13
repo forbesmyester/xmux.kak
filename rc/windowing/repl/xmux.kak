@@ -114,6 +114,12 @@ define-command -docstring %{
     xmux-repl %{
     evaluate-commands %sh{
         . "$kak_opt_prelude_path"
+        SOCKET="$(xmux current_socket)"
+        if [ "$kak_session" = "$SOCKET" ]; then
+            echo "xmux-split"
+            exit
+        fi
+
         if [ "$#" -eq 0 ]; then
             echo "xmux-repl-ensure default"
             exit
@@ -123,11 +129,9 @@ define-command -docstring %{
             exit
         fi
         if [ "$1" = "" ]; then
-            # echo "xmux-repl-ensure 'default'"
             echo "xmux-lines 'default' %arg{2}"
             exit
         fi
-        # echo "xmux-repl-ensure %arg{1}"
         echo "xmux-lines %arg{1} %arg{2}"
     }
 }
