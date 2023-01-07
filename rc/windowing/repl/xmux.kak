@@ -21,11 +21,19 @@ define-command -hidden -params 1..2 xmux-repl-ensure-impl %{
 }
 
 
-define-command -hidden -params 1 xmux-commands %{
+define-command -params 1 xmux-commands -docstring %{
+    xmux-commands NAME: defines commands for NAME
+} %{
     evaluate-commands %sh{
         echo "define-command" "-override" "xmux-chars-$1" "-params" "0..1 %{ xmux-chars "$1" %arg{@} }"
         echo "define-command" "-override" "xmux-lines-$1" "-params" "0..1 %{ xmux-lines "$1" %arg{@} }"
         echo "define-command" "-override" "xmux-key-$1" "-params" "1 %{ xmux-key "$1" %arg{@} }"
+        echo declare-option str "xmux_lines_${1}_before_lines_pre_key" ""
+        echo declare-option str "xmux_lines_${1}_before_lines" ""
+        echo declare-option str "xmux_lines_${1}_before_lines_post_key" ""
+        echo declare-option str "xmux_lines_${1}_after_lines_pre_key" ""
+        echo declare-option str "xmux_lines_${1}_after_lines" ""
+        echo declare-option str "xmux_lines_${1}_after_lines_post_key" ""
     }
 }
 
@@ -33,10 +41,11 @@ define-command -hidden -params 1 xmux-commands %{
 define-command -hidden -params 1 xmux-repl-ensure %{
     xmux-repl-ensure-impl %val{session} %arg{@}
     set-option current xmux_session %arg{1}
+    # set-option global xmux_session %arg{1}
 }
 
 
-define-command -params 1 xmux-reset %{
+define-command -hidden -params 1 xmux-reset %{
     evaluate-commands %sh{
         xmux wait-for "$kak_session" "$1"
         THE_WIN="$( xmux current-window "$kak_session" "$1" | sed 's/ .*//' )"
@@ -68,24 +77,55 @@ define-command -params 0 xmux-split %{
 
 
 define-command -hidden -params 1..2 xmux-chars %{
-    xmux-send chars %arg{@}
+    xmux-send 0 chars %arg{@}
 }
 
 
 define-command -hidden -params 1..2 xmux-lines %{
-    xmux-send lines %arg{@}
+
+    evaluate-commands %sh{
+        gawk -v REPL="$1" '
+            BEGIN {
+                printf "xmux-key %s %s%s%s\n", REPL, "%opt{xmux_lines_", REPL, "_before_lines_pre_key}"
+                printf "xmux-send 0 lines %s %s%s%s\n", REPL, "%opt{xmux_lines_", REPL, "_before_lines}"
+                printf "xmux-key %s %s%s%s\n", REPL, "%opt{xmux_lines_", REPL, "_before_lines_post_key}"
+                printf "xmux-send 1 lines %%arg{@}\n"
+                printf "xmux-key %s %s%s%s\n", REPL, "%opt{xmux_lines_", REPL, "_after_lines_pre_key}"
+                printf "xmux-send 0 lines %s %s%s%s\n", REPL, "%opt{xmux_lines_", REPL, "_after_lines}"
+                printf "xmux-key %s %s%s%s\n", REPL, "%opt{xmux_lines_", REPL, "_after_lines_post_key}"
+            }'
+    }
+
+    # xmux-send 1 lines %arg{@}
 }
 
+define-command xmux-selected-key -params 1  %{
+    evaluate-commands %sh{
+        echo "echo xmux-key "%opt{xmux_session}" "%arg{1}"" 
+    }
+}
 
-define-command -hidden -params 2..3 xmux-send %{
-    xmux-repl-ensure %arg{2}
+define-command -hidden -params 3..4 xmux-send %{
+    xmux-repl-ensure %arg{3}
     nop %sh{
-        WIN="$(echo "$kak_opt_xmux_window" | awk -v K="$2" 'BEGIN{ FS="="; RS=" " } $1==K{ print $2 }')"
-        PANE="$(echo "$kak_opt_xmux_pane" | awk -v K="$2" 'BEGIN{ FS="="; RS=" " } $1==K{ print $2 }')"
-        if [ "$#" -gt 2 ]; then
-            printf "%s" "$3" | xmux "$1" "$kak_session" "$2" "$WIN" "$PANE"
+        if [ "$1" -eq "0" ]; then
+        echo "X $# / _${4}_" > L
+            if [ "$#" -lt 4 ]; then
+                echo "E1" > L
+                exit
+            fi
+            if [ "$4" = "" ]; then
+                echo "E2" > L
+                exit
+            fi
+        fi
+        echo "1 $1 ; 2 $2 ; 3 $3 ; 4 $4" >> ll
+        WIN="$(echo "$kak_opt_xmux_window" | awk -v K="$3" 'BEGIN{ FS="="; RS=" " } $2==K{ print $3 }')"
+        PANE="$(echo "$kak_opt_xmux_pane" | awk -v K="$3" 'BEGIN{ FS="="; RS=" " } $2==K{ print $3 }')"
+        if [ "$#" -gt 3 ]; then
+            printf "%s" "$4" | xmux "$2" "$kak_session" "$3" "$WIN" "$PANE"
         else
-            printf "%s" "${kak_selection}" | xmux "$1" "$kak_session" "$2" "$WIN" "$PANE"
+            printf "%s" "${kak_selection}" | xmux "$2" "$kak_session" "$3" "$WIN" "$PANE"
         fi
     }
     set-option current xmux_session %arg{2}
@@ -95,9 +135,11 @@ define-command -hidden -params 2..3 xmux-send %{
 define-command -hidden -params 2 xmux-key %{
     xmux-repl-ensure %arg{1}
     nop %sh{
-        WIN="$(echo "$kak_opt_xmux_window" | awk -v K="$1" 'BEGIN{ FS="="; RS=" " } $1==K{ print $2 }')"
-        PANE="$(echo "$kak_opt_xmux_pane" | awk -v K="$1" 'BEGIN{ FS="="; RS=" " } $1==K{ print $2 }')"
-        xmux "key" "$kak_session" "$1" "$WIN" "$PANE" "$2"
+        if [ "$2" != "" ]; then
+            WIN="$(echo "$kak_opt_xmux_window" | awk -v K="$1" 'BEGIN{ FS="="; RS=" " } $1==K{ print $2 }')"
+            PANE="$(echo "$kak_opt_xmux_pane" | awk -v K="$1" 'BEGIN{ FS="="; RS=" " } $1==K{ print $2 }')"
+            xmux "key" "$kak_session" "$1" "$WIN" "$PANE" "$2"
+        fi
     }
     set-option current xmux_session %arg{2}
 }
