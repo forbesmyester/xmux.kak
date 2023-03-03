@@ -77,7 +77,7 @@ define-command -params 0 xmux-split %{
 
 
 define-command -hidden -params 1..2 xmux-chars %{
-    xmux-send 0 chars %arg{@}
+    xmux-send 1 chars %arg{@}
 }
 
 
