@@ -16,11 +16,12 @@ define-command -hidden -params 1..2 xmux-repl-ensure-impl %{
         fi
         echo "connect-terminal xmux new \"$1\" \"$2\""
         echo "xmux-commands \"$2\""
+        echo "xmux-reset \"$2\""
     }
 }
 
 
-define-command -params 1 xmux-commands -docstring %{
+define-command -hidden -params 1 xmux-commands -docstring %{
     xmux-commands NAME: defines commands for NAME
 } %{
     evaluate-commands %sh{
@@ -62,7 +63,7 @@ define-command -params 0 xmux-split %{
     evaluate-commands %sh{
         SOCKET="$(xmux current_socket)"
         if [ "$kak_session" != "$SOCKET" ]; then
-            echo "echo 'Kakoune session must be same name as tmux session $kak_session != $SOCKET'"
+            echo "echo 'Kakoune session must be same name as tmux session (KAK_SESSION: $kak_session) != (TMUX_SOCKET $SOCKET)'"
             exit
         fi
         SESSION="$(xmux current_session "$SOCKET")"
@@ -70,6 +71,8 @@ define-command -params 0 xmux-split %{
         THE_WIN="$(echo "$WIN_PANE" | sed 's/ .*//')"
         THE_PANE="$(echo "$WIN_PANE" | sed 's/.* //')"
         echo "set-option global xmux_session '""$SESSION""'"
+        # echo "set-option" "-add" "current" "xmux_window" "${SESSION}=$THE_WIN"
+        # echo "set-option" "-add" "current" "xmux_pane" "${SESSION}=$THE_PANE"
         echo "xmux-commands '""$SESSION""'"
     }
 }
@@ -164,6 +167,12 @@ define-command -docstring %{
     xmux-repl %{
     evaluate-commands %sh{
         . "$kak_opt_prelude_path"
+        SOCKET="$(xmux current_socket)"
+        if [ "$kak_session" = "$SOCKET" ]; then
+            echo "xmux-split"
+            exit
+        fi
+
         if [ "$#" -eq 0 ]; then
             echo "xmux-repl-ensure default"
             exit
@@ -173,11 +182,9 @@ define-command -docstring %{
             exit
         fi
         if [ "$1" = "" ]; then
-            # echo "xmux-repl-ensure 'default'"
             echo "xmux-lines 'default' %arg{2}"
             exit
         fi
-        # echo "xmux-repl-ensure %arg{1}"
         echo "xmux-lines %arg{1} %arg{2}"
     }
 }
