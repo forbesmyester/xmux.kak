@@ -128,8 +128,8 @@ define-command -hidden -params 3..4 xmux-send %{
             fi
         fi
         # echo "1 $1 ; 2 $2 ; 3 $3 ; 4 $4" >> ll
-        WIN="$(echo "$kak_opt_xmux_window" | awk -v K="$3" 'BEGIN{ FS="="; RS=" " } $2==K{ print $3 }')"
-        PANE="$(echo "$kak_opt_xmux_pane" | awk -v K="$3" 'BEGIN{ FS="="; RS=" " } $2==K{ print $3 }')"
+        WIN="$(echo "$kak_opt_xmux_window" | awk -v K="$3" 'BEGIN{ FS="="; RS=" " } $1==K{ print $2 }')"
+        PANE="$(echo "$kak_opt_xmux_pane" | awk -v K="$3" 'BEGIN{ FS="="; RS=" " } $1==K{ print $2 }')"
         if [ "$#" -gt 3 ]; then
             printf "%s" "$4" | xmux "$2" "$kak_session" "$3" "$WIN" "$PANE"
         else
